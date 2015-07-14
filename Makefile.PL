@@ -14,6 +14,8 @@ getopt('L:I:', \%opts) or die usage();
 
 my @dirs;
 my $include_dirs;
+my $libsodium_path;
+my $libsodium_libs;
 
 if ( $opts{L} && $opts{I} ) {
     @dirs = $opts{L};
@@ -21,6 +23,20 @@ if ( $opts{L} && $opts{I} ) {
 
     die "Could not locate sodium.h in $opts{I}\n"
         unless -e "$opts{I}/sodium.h";
+
+    my $lib_ext = $Config{lib_ext};
+    my $libsodium_lib = "libsodium${lib_ext}";
+
+    for my $dir ( @dirs ) {
+        if ( -e "$dir/$libsodium_lib" ) {
+            $libsodium_path = "$dir/$libsodium_lib";
+            last;
+        }
+    }
+
+    die "Is Alien::Sodium available? Could not locate $libsodium_lib in @dirs\n"
+        unless $libsodium_path;
+
 } else {
     require Alien::Sodium;
     require File::Spec;
@@ -30,26 +46,8 @@ if ( $opts{L} && $opts{I} ) {
     my $libsodium = Alien::Sodium->new;
 
     $include_dirs = $libsodium->cflags;
-
-    @dirs = map { s/^-L//g; $_ } grep { /^-L/ } Text::ParseWords::shellwords($libsodium->libs);
-
-    # pkg-config may fail, so try harder to locate libsodium.a
-    push @dirs, File::Spec->catdir( File::ShareDir::dist_dir("Alien-Sodium"), 'lib' );
+    $libsodium_libs = $libsodium->libs;
 }
-
-my $lib_ext = $Config{lib_ext};
-my $libsodium_lib = "libsodium${lib_ext}";
-my $libsodium_path;
-
-for my $dir ( @dirs ) {
-    if ( -e "$dir/$libsodium_lib" ) {
-        $libsodium_path = "$dir/$libsodium_lib";
-        last;
-    }
-}
-
-die "Is Alien::Sodium available? Could not locate $libsodium_lib in @dirs\n"
-    unless $libsodium_path;
 
 my %WriteMakefileArgs = (
   ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
@@ -67,7 +65,8 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "Crypt-NaCl-Sodium",
   "EXE_FILES" => [],
-  "MYEXTLIB"  => $libsodium_path,
+  ($libsodium_path ? ("MYEXTLIB"  => $libsodium_path) : ()),
+  ($libsodium_libs ? ("LIBS"      => $libsodium_libs) : ()),
   "INC"       => join(' ', "-I.", $include_dirs),
   "LICENSE" => "perl",
   "NAME" => "Crypt::NaCl::Sodium",
