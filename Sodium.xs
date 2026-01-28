@@ -2530,7 +2530,7 @@ keypair(self, ...)
                 unsigned char * seed_buf = (unsigned char *)SvPV(ST(1), seed_len);
 
                 if ( seed_len != crypto_box_SEEDBYTES ) {
-                    croak("Invalid seed length: %u", seed_len);
+                    croak("Invalid seed length: %" UVuf,  (UV) seed_len);
                 }
 
                 blp = InitDataBytesLocker(aTHX_ crypto_box_PUBLICKEYBYTES);
@@ -3117,7 +3117,7 @@ keypair(self, ...)
                 unsigned char * seed_buf = (unsigned char *)SvPV(ST(1), seed_len);
 
                 if ( seed_len != crypto_sign_SEEDBYTES ) {
-                    croak("Invalid seed length: %u", seed_len);
+                    croak("Invalid seed length: %" UVuf, (UV) seed_len);
                 }
 
                 blp = InitDataBytesLocker(aTHX_ crypto_sign_PUBLICKEYBYTES);
@@ -3475,7 +3475,7 @@ keygen(self, keybytes = crypto_generichash_KEYBYTES)
         PERL_UNUSED_VAR(self);
 
         if ( keybytes < crypto_generichash_KEYBYTES_MIN || keybytes > crypto_generichash_KEYBYTES_MAX ) {
-            croak("Invalid keybytes value: %u", keybytes);
+            croak("Invalid keybytes value: %" UVuf, (UV) keybytes);
         }
 
         bl = InitDataBytesLocker(aTHX_ keybytes);
@@ -3515,13 +3515,13 @@ mac(self, msg, ...)
                 if ( keylen == 3 && strnEQ(key, "key", 3) ) {
                     key_buf = (unsigned char *)SvPV(ST(i+1), key_len);
                     if ( key_len < crypto_generichash_KEYBYTES_MIN || key_len > crypto_generichash_KEYBYTES_MAX ) {
-                        croak("Invalid key length: %u", key_len);
+                        croak("Invalid key length: %" UVuf, (UV) key_len);
                     }
                 }
                 else if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     bytes = (size_t)SvUV(ST(i+1));
                     if ( bytes < crypto_generichash_BYTES_MIN || bytes > crypto_generichash_BYTES_MAX ) {
-                        croak("Invalid bytes value: %u", bytes);
+                        croak("Invalid bytes value: %" UVuf, (UV) bytes);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3565,13 +3565,13 @@ init(self, ...)
                 if ( keylen == 3 && strnEQ(key, "key", 3) ) {
                     key_buf = (unsigned char *)SvPV(ST(i+1), key_len);
                     if ( key_len < crypto_generichash_KEYBYTES_MIN || key_len > crypto_generichash_KEYBYTES_MAX ) {
-                        croak("Invalid key length: %u", key_len);
+                        croak("Invalid key length: %" UVuf, (UV) key_len);
                     }
                 }
                 else if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     bytes =  SvUV(ST(i+1));
                     if ( bytes < crypto_generichash_BYTES_MIN || bytes > crypto_generichash_BYTES_MAX ) {
-                        croak("Invalid bytes value: %u", bytes);
+                        croak("Invalid bytes value: %" UVuf, (UV) bytes);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3655,7 +3655,7 @@ final(self, ...)
                 if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     bytes =  SvUV(ST(i+1));
                     if ( bytes < crypto_generichash_BYTES_MIN || bytes > crypto_generichash_BYTES_MAX ) {
-                        croak("Invalid bytes value: %u", bytes);
+                        croak("Invalid bytes value: %" UVuf, (UV) bytes);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3852,17 +3852,17 @@ key(self, passphrase, salt, ... )
                 if ( keylen == 8 && strnEQ(key, "opslimit", 8) ) {
                     opslimit = (unsigned long long)SvUV(ST(i+1));
                     if ( opslimit < 1 ) {
-                        croak("Invalid opslimit: %lld", opslimit);
+                        croak("Invalid opslimit: %" UVuf, (UV) opslimit);
                     }
                 } else if ( keylen == 8 && strnEQ(key, "memlimit", 8) ) {
                     memlimit = (unsigned long long)SvUV(ST(i+1));
                     if ( memlimit < 1 ) {
-                        croak("Invalid memlimit: %lld", memlimit);
+                        croak("Invalid memlimit: %" UVuf, (UV) memlimit);
                     }
                 } else if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     outlen = (unsigned long long)SvUV(ST(i+1));
                     if ( outlen < 1 ) {
-                        croak("Invalid bytes: %lld", outlen);
+                        croak("Invalid bytes: %" UVuf, (UV) outlen);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3917,12 +3917,12 @@ str(self, passphrase, ... )
                 if ( keylen == 8 && strnEQ(key, "opslimit", 8) ) {
                     opslimit =  SvUV(ST(i+1));
                     if ( opslimit < 1 ) {
-                        croak("Invalid opslimit: %lld", opslimit);
+                        croak("Invalid opslimit: %" UVuf, (UV) opslimit);
                     }
                 } else if ( keylen == 8 && strnEQ(key, "memlimit", 8) ) {
                     memlimit =  SvUV(ST(i+1));
                     if ( memlimit < 1 ) {
-                        croak("Invalid memlimit: %lld", memlimit);
+                        croak("Invalid memlimit: %" UVuf, (UV) memlimit);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
