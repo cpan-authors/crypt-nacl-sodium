@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::auth
-# ABSTRACT: Secret-key message authentication (HMAC-SHA256, HMAC-SHA512, HMAC-SHA512/256 )
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::auth - Secret-key message authentication
 
 =head1 SYNOPSIS
 
@@ -473,5 +476,15 @@ functions however support keys of any length.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

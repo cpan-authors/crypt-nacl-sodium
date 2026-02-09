@@ -6,11 +6,17 @@ use Test::More;
 
 use Crypt::NaCl::Sodium qw(bin2hex);
 
+my $sodium = Crypt::NaCl::Sodium->new();
 my $crypto_stream = Crypt::NaCl::Sodium->stream();
 
+my ($major, $minor, $patch) = split '\.', Crypt::NaCl::Sodium::sodium_version_string();
+print "$major.$minor.$patch\n";
+my @bytes = qw( NONCEBYTES KEYBYTES CHACHA20_NONCEBYTES CHACHA20_KEYBYTES
+                SALSA20_NONCEBYTES SALSA20_KEYBYTES );
+push @bytes, 'AES128CTR_NONCEBYTES' if $patch le 14;
+push @bytes, 'AES128CTR_KEYBYTES' if $patch le 14; 
 ok($crypto_stream->$_ > 0, "$_ > 0")
-    for qw( NONCEBYTES KEYBYTES CHACHA20_NONCEBYTES CHACHA20_KEYBYTES
-    SALSA20_NONCEBYTES SALSA20_KEYBYTES AES128CTR_NONCEBYTES AES128CTR_KEYBYTES  );
+    for ( @bytes );
 
 my %tests = (
     'XSalsa20' => {
@@ -37,6 +43,7 @@ my %tests = (
 my $msg = chr(0x42) x 160;
 
 for my $c ( sort keys %tests ) {
+    next if $c eq 'AES-128-CTR' and $patch gt 14; 
     my $method_prefix = $tests{$c}->{method_prefix};
     my $const_prefix = $tests{$c}->{const_prefix};
 

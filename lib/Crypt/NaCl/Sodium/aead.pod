@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::aead
-# ABSTRACT: Authenticated Encryption with Additional Data (ChaCha20/Poly1305 MAC, AES256-GCM)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::aead - Authenticated Encryption with Additional Data
 
 =head1 SYNOPSIS
 
@@ -454,5 +457,15 @@ C<TLS 1.2> ciphers.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

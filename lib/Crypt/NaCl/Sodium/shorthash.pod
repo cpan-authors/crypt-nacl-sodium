@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::shorthash
-# ABSTRACT: Short-input hashing (SipHash-2-4)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::shorthash - Short input hashing
 
 =head1 SYNOPSIS
 
@@ -109,5 +112,15 @@ short messages.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

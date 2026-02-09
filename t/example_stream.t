@@ -93,7 +93,8 @@ my $msg = "Secret message";
     is($decrypted_msg->to_hex, bin2hex($msg), "msg decrypted");
 }
 
-{
+SKIP: {
+    skip "aes128ctr is not available on this version", 3 unless Crypt::NaCl::Sodium::has_aes128ctr();
     ## AES-128-CTR
     ########
 
@@ -120,5 +121,5 @@ my $msg = "Secret message";
     is($decrypted_msg->to_hex, bin2hex($msg), "msg decrypted");
 }
 
-done_testing();
 
+done_testing();

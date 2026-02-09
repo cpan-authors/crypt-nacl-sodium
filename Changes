@@ -2,6 +2,18 @@ Revision history for Perl extension Crypt::NaCl::Sodium.
 
 {{$NEXT}}
 
+    - Support Alien::Sodium v2.000 (libsodium 1.0.18)
+    - Added support for sodium_version_string()
+    - Added support for Crypt::NaCl::Sodium::add() (sodium_add)
+    - Fix some issues with hex2bin()
+    - AES128CTR croaks on libsodium >= 1.0.15
+    - Minor integer size fixes to string formats
+
+    [Compatibility Changes from 1.0.8.0]
+    - AES128CTR was dropped in libsodium (1.0.15)
+    - Minimum key Byte Size of 16 is now enforced in libsodium (1.0.11)
+    - Malleable signatures unsupported unless ED25519_COMPAT defined in libsodium (1.0.9)
+
 1.0.8.0 2015-12-27 21:45:43
     - Use Alien::Sodium v1.0.8.0
 

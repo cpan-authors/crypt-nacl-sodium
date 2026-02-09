@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::pwhash
-# ABSTRACT: Password hashing (yescrypt)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::pwhash - Password hashing
 
 =head1 SYNOPSIS
 
@@ -124,7 +127,7 @@ Returns L<Data::BytesLocker> object.
         opslimit => $opslimit, memlimit => $memlimit
     );
 
-Returns ASCI encoded string, which includes:
+Returns ASCII encoded string, which includes:
 
 =over 4
 
@@ -223,5 +226,15 @@ submitted to the I<Password Hashing Competition>.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

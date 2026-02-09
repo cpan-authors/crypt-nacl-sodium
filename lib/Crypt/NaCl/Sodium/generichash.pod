@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::generichash
-# ABSTRACT: Generic hashing (Blake2b)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::generichash - Generic hashing
 
 =head1 SYNOPSIS
 
@@ -193,5 +196,15 @@ on low-end systems. The core algorithm of I<Blake2b> is derived from I<ChaCha> s
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

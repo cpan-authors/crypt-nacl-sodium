@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::sign
-# ABSTRACT: Public-key signatures (Ed25519)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::sign - Public-key signatures
 
 =head1 SYNOPSIS
 
@@ -263,5 +266,16 @@ AES-128, small keys and signatures, and is immune to side-channel attacks.
 =item * L<Ed25519: high-speed high-security signatures|http://ed25519.cr.yp.to/>
 
 =back
+
+=head1 AUTHOR
+
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =cut

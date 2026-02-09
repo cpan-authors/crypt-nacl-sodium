@@ -1,8 +1,7 @@
-
 use strict;
 use warnings;
 use Test::More;
-
+use utf8;
 
 use Crypt::NaCl::Sodium qw(:utils);
 
@@ -44,8 +43,8 @@ my @tests = (
     ."9bb078ed1f0d31e7f9b8062409f37f19f8550aae",
     152,
     "eb2a3056a09ad2d7d7f975bcd707598f24cd32518cde3069f2e403b34bfee8a5",
-    5, 643464, 1397645,
-    "1828b82997"
+    16, 643464, 1397645,
+    "1828b82997d74eee2bcd147c0047a445"
   ],
   [ "4a857e2ee8aa9b6056f2424e84d24a72473378906ee04a46cb05311502d5250b82"
     ."ad86b83c8f20a23dbb74f6da60b0b6ecffd67134d45946ac8ebfb3064294bc097d"
@@ -134,9 +133,15 @@ for my $test ( @tests ) {
 
     my $passwd = hex2bin($passwd_hex);
     my $salt = hex2bin($salt_hex);
-
-    my $key = $crypto_pwhash->key( $passwd, $salt,
-        bytes => $outlen, opslimit => $opslimit, memlimit => $memlimit );
+# use Data::Dumper::Concise;
+# diag "Salt hex: $salt_hex";
+# diag "Salt bin: ", Dumper($salt);
+    my $key; my $error;
+    $error = $@ || 'ERROR' unless eval {
+        $key = $crypto_pwhash->key( $passwd, $salt, bytes => $outlen, opslimit => $opslimit, memlimit => $memlimit );
+        1;
+    };
+    ok(!$error, 'Yay. no error');
 
    is(bin2hex($key), $expected_hex, "key for $test_no as expected");
 
@@ -313,4 +318,3 @@ ok( ! $crypto_pwhash->verify( $s_str1, $passwd ), "modified str fails verificati
 
 
 done_testing();
-

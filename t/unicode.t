@@ -1,16 +1,13 @@
-
 use strict;
 use warnings;
-use Test::More;
-
+use utf8;
 
 use Crypt::NaCl::Sodium qw( :utils );
+use Devel::Peek;
+use Test::More;
 
 my $crypto_hash = Crypt::NaCl::Sodium->hash();
-
 my $word = "ążś";
-
-use Devel::Peek;
 
 {
     ## SHA-256
@@ -55,4 +52,3 @@ use Devel::Peek;
 }
 
 done_testing();
-

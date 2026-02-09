@@ -1,16 +1,16 @@
+package Crypt::NaCl::Sodium;
+
+our $VERSION = '2.000';
+our $XS_VERSION = $VERSION;
+
 use strict;
 use warnings;
-
-#ABSTRACT: NaCl compatible modern, easy-to-use library for  encryption, decryption, signatures, password hashing and more
-package Crypt::NaCl::Sodium;
 
 use Carp qw( croak );
 use Sub::Exporter;
 
 require XSLoader;
-XSLoader::load('Crypt::NaCl::Sodium', $Crypt::NaCl::Sodium::{VERSION} ?
-        ${ $Crypt::NaCl::Sodium::{VERSION} } : ()
-    );
+XSLoader::load('Crypt::NaCl::Sodium', $XS_VERSION);
 
 my @funcs = qw(
     bin2hex hex2bin
@@ -162,6 +162,12 @@ sub new { return bless {}, __PACKAGE__ }
 1;
 
 __END__
+
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium - NaCl compatible modern, easy-to-use library for encryption, decryption, signatures, password hashing and more
 
 =head1 SYNOPSIS
 
@@ -476,6 +482,32 @@ The length of the C<$bytes> equals the value of C<$num_of_bytes>.
 
 Returns L<Data::BytesLocker> object.
 
+=head2 add
+
+    # equivalent of sodium_add($S, $l, length($l))
+    my $x = Crypt::NaCl::Sodium::add($S, $l);
+
+Accepts two integers.  It computes (a + b) mod 2^(8*len) in constant time
+for a given length and returns the result.
+
+Returns Integer
+
+=head2 has_aes128ctr
+
+    my $supported = Crypt::NaCl::Sodium::has_aes128ctr()
+
+Checks whether the underlying libsodium supports ASE128CTR
+
+Returns &PL_sv_yes or &PL_sx_no
+
+=head2 sodium_version_string
+
+    my $version = Crypt::NaCl::Sodium::sodium_version_string()
+
+Gets the libsodium version string
+
+Returns a string like "1.0.18"
+
 =head1 VARIABLES
 
 =head2 $Data::BytesLocker::DEFAULT_LOCKED
@@ -522,5 +554,15 @@ L<Data::BytesLocker/"unlock"> before accessing.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

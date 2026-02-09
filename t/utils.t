@@ -1,4 +1,3 @@
-
 use strict;
 use warnings;
 use Test::More;
@@ -139,4 +138,3 @@ is(bin2hex($nonce), "0001ff000000000000000000000000000000000000000000",
     "incremented ff00ff000...");
 
 done_testing();
-

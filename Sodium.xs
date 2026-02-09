@@ -1,5 +1,6 @@
 
 #define PERL_NO_GET_CONTEXT
+#define NO_XSLOCKS
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -728,6 +729,54 @@ BOOT:
 
 PROTOTYPES: ENABLE
 
+const char *
+sodium_version_string()
+
+SV *
+add(left, right)
+    SV * left
+    SV * right
+    PREINIT:
+        unsigned char * copy;
+    INIT:
+        unsigned char * left_buf;
+        unsigned char * right_buf;
+        STRLEN copy_len;
+        STRLEN left_len;
+        STRLEN right_len;
+    CODE:
+    {
+        left_buf = (unsigned char *)SvPV(left, left_len);
+        right_buf = (unsigned char *)SvPV(right, right_len);
+        if (right_len > left_len) {
+            croak("You must have a RHS less than or equal in length to the LHS");
+        }
+        copy = sodium_malloc(left_len + 1);
+        if (copy == NULL) {
+            croak("Could not allocate memory");
+        }
+
+        strcpy(copy, left_buf);
+
+        sodium_add(copy, right_buf, right_len);
+        RETVAL = newSVpvn((const char * const)copy, left_len);
+    }
+    OUTPUT:
+        RETVAL
+    CLEANUP:
+        sodium_free(copy);
+
+void
+has_aes128ctr()
+    PPCODE:
+    {
+#ifdef AES128CTR_IS_AVAILABLE
+    XSRETURN_YES;
+#else
+    XSRETURN_NO;
+#endif
+    }
+
 void
 memcmp(left, right, length = 0)
     SV * left
@@ -908,53 +957,80 @@ SV *
 hex2bin(hex_sv, ...)
     SV * hex_sv
     PREINIT:
-        char * hex;
-        unsigned char * bin;
-        size_t hex_len;
-        size_t bin_len;
+        size_t hex_len = 0;
+        size_t bin_len = 0;
         size_t bin_max_len = 0;
+        int i = 0;
+        STRLEN keylen = 0;
+        char * hex = NULL;
         char * ignore = NULL;
+        char * key = NULL;
+        const char *hex_end = NULL;
+        unsigned char * bin = NULL;
+
+        /* idiot check our hex string and turn it into a C string */
+        if (SvOK(hex_sv) && SvPOK(hex_sv)) {
+            hex = SvPV(hex_sv, hex_len);
+            if (hex_len == 0) {
+                XSRETURN_PV("");
+            }
+        } else {
+            croak("A hex string must be provided");
+        }
     CODE:
-        hex = SvPV(hex_sv, hex_len);
-
-        if ( items > 1 && (items + 1) % 2 != 0 ) {
-            croak("Invalid number of arguments");
-        } else if ( items > 1 ) {
-            int i = 0;
-            STRLEN keylen = 0;
-            char * key;
-
-            for ( i = 1; i < items; i += 2 ) {
+        if (items > 1) {
+            if ((items + 1) % 2 != 0) {
+                croak("Invalid number of arguments");
+            }
+            for (i = 1; i < items; i += 2) {
+                if (!SvOK(ST(i)) || !SvPOK(ST(i)))
+                    continue;
                 key = SvPV(ST(i), keylen);
-                if ( keylen == 6 && strnEQ(key, "ignore", 6) ) {
-                    ignore = SvPV_nolen(ST(i+1));
-                } else if ( keylen == 7 && strnEQ(key, "max_len", 7) ) {
-                    bin_max_len = SvUV(ST(i+1));
-                    if ( bin_max_len <= 0 ) {
-                        croak("Invalid value for max_len: %ld", (long)bin_max_len);
+                if (keylen == 6 && strnEQ(key, "ignore", 6)) {
+                    if (SvOK(ST(i + 1)) && SvPOK(ST(i + 1))) {
+                        ignore = SvPV(ST(i + 1), keylen);
+                        if (keylen < 1 && ignore != NULL) {
+                            ignore = NULL;
+                        }
                     }
-                } else {
-                    croak("Invalid argument: %s", key);
+                } else if (keylen == 7 && strnEQ(key, "max_len", 7)) {
+                    if (SvOK(ST(i + 1)) && (SvIOK(ST(i + 1)) || SvUOK(ST(i + 1)))) {
+                        bin_max_len = SvUV(ST(i + 1));
+                    }
+                    else {
+                        croak("Invalid max_len. Must be an integer > 0.");
+                    }
                 }
             }
         }
-        if ( bin_max_len == 0 ) {
-            if ( ignore == NULL ) {
-                bin_max_len = hex_len / 2;
-            } else {
-                bin_max_len = hex_len;
-            }
-        }
-        bin = sodium_malloc( bin_max_len + 1 );
-        if ( bin == NULL ) {
+
+        size_t max_bin_size = (ignore == NULL) ? (hex_len / 2) : hex_len;
+
+        /* ensure our binary string has enough space */
+        bin = (unsigned char *) sodium_malloc(max_bin_size + 1);
+        if (bin == NULL) {
             croak("Could not allocate memory");
         }
-        sodium_hex2bin(bin, bin_max_len, hex, hex_len, ignore, &bin_len, NULL);
-        RETVAL = newSVpvn((const char * const)bin, bin_len);
+
+        memset(bin, '\0', max_bin_size + 1);
+
+        int status = sodium_hex2bin(bin, max_bin_size, hex, hex_len, ignore, &bin_len, &hex_end);
+
+        /* If the call was successful, truncate to max_len if user requested it */
+        if (status == 0) {
+            if (bin_max_len > 0 && bin_max_len < bin_len) {
+                bin_len = bin_max_len;
+            }
+            RETVAL = newSVpvn((const char *)bin, bin_len);
+        } else {
+            /* Handle actual errors (invalid hex, etc.) */
+            RETVAL = &PL_sv_undef;
+        }
+
     OUTPUT:
         RETVAL
     CLEANUP:
-        sodium_free(bin);
+        if (bin != NULL) sodium_free(bin);
 
 MODULE = Crypt::NaCl::Sodium        PACKAGE = Crypt::NaCl::Sodium::secretbox
 
@@ -1988,7 +2064,7 @@ encrypt(self, msg, adata, nonce, key)
         unsigned int nonce_size;
         unsigned int adlen_size;
         unsigned int key_size;
-        int (*encrypt_function)(unsigned char *, unsigned long long *, const unsigned char *, unsigned long long, 
+        int (*encrypt_function)(unsigned char *, unsigned long long *, const unsigned char *, unsigned long long,
             const unsigned char *, unsigned long long, const unsigned char *, const unsigned char *, const unsigned char *);
         DataBytesLocker *bl;
     PPCODE:
@@ -2074,7 +2150,7 @@ decrypt(self, msg, adata, nonce, key)
         unsigned int nonce_size;
         unsigned int adlen_size;
         unsigned int key_size;
-        int (*decrypt_function)(unsigned char *, unsigned long long *, unsigned char *, const unsigned char *, unsigned long long, 
+        int (*decrypt_function)(unsigned char *, unsigned long long *, unsigned char *, const unsigned char *, unsigned long long,
             const unsigned char *, unsigned long long, const unsigned char *, const unsigned char *);
         DataBytesLocker *bl;
     PPCODE:
@@ -2454,7 +2530,7 @@ keypair(self, ...)
                 unsigned char * seed_buf = (unsigned char *)SvPV(ST(1), seed_len);
 
                 if ( seed_len != crypto_box_SEEDBYTES ) {
-                    croak("Invalid seed length: %u", seed_len);
+                    croak("Invalid seed length: %" UVuf,  (UV) seed_len);
                 }
 
                 blp = InitDataBytesLocker(aTHX_ crypto_box_PUBLICKEYBYTES);
@@ -3041,7 +3117,7 @@ keypair(self, ...)
                 unsigned char * seed_buf = (unsigned char *)SvPV(ST(1), seed_len);
 
                 if ( seed_len != crypto_sign_SEEDBYTES ) {
-                    croak("Invalid seed length: %u", seed_len);
+                    croak("Invalid seed length: %" UVuf, (UV) seed_len);
                 }
 
                 blp = InitDataBytesLocker(aTHX_ crypto_sign_PUBLICKEYBYTES);
@@ -3399,7 +3475,7 @@ keygen(self, keybytes = crypto_generichash_KEYBYTES)
         PERL_UNUSED_VAR(self);
 
         if ( keybytes < crypto_generichash_KEYBYTES_MIN || keybytes > crypto_generichash_KEYBYTES_MAX ) {
-            croak("Invalid keybytes value: %u", keybytes);
+            croak("Invalid keybytes value: %" UVuf, (UV) keybytes);
         }
 
         bl = InitDataBytesLocker(aTHX_ keybytes);
@@ -3439,13 +3515,13 @@ mac(self, msg, ...)
                 if ( keylen == 3 && strnEQ(key, "key", 3) ) {
                     key_buf = (unsigned char *)SvPV(ST(i+1), key_len);
                     if ( key_len < crypto_generichash_KEYBYTES_MIN || key_len > crypto_generichash_KEYBYTES_MAX ) {
-                        croak("Invalid key length: %u", key_len);
+                        croak("Invalid key length: %" UVuf, (UV) key_len);
                     }
                 }
                 else if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     bytes = (size_t)SvUV(ST(i+1));
                     if ( bytes < crypto_generichash_BYTES_MIN || bytes > crypto_generichash_BYTES_MAX ) {
-                        croak("Invalid bytes value: %u", bytes);
+                        croak("Invalid bytes value: %" UVuf, (UV) bytes);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3489,13 +3565,13 @@ init(self, ...)
                 if ( keylen == 3 && strnEQ(key, "key", 3) ) {
                     key_buf = (unsigned char *)SvPV(ST(i+1), key_len);
                     if ( key_len < crypto_generichash_KEYBYTES_MIN || key_len > crypto_generichash_KEYBYTES_MAX ) {
-                        croak("Invalid key length: %u", key_len);
+                        croak("Invalid key length: %" UVuf, (UV) key_len);
                     }
                 }
                 else if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     bytes =  SvUV(ST(i+1));
                     if ( bytes < crypto_generichash_BYTES_MIN || bytes > crypto_generichash_BYTES_MAX ) {
-                        croak("Invalid bytes value: %u", bytes);
+                        croak("Invalid bytes value: %" UVuf, (UV) bytes);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3579,7 +3655,7 @@ final(self, ...)
                 if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     bytes =  SvUV(ST(i+1));
                     if ( bytes < crypto_generichash_BYTES_MIN || bytes > crypto_generichash_BYTES_MAX ) {
-                        croak("Invalid bytes value: %u", bytes);
+                        croak("Invalid bytes value: %" UVuf, (UV) bytes);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3776,17 +3852,17 @@ key(self, passphrase, salt, ... )
                 if ( keylen == 8 && strnEQ(key, "opslimit", 8) ) {
                     opslimit = (unsigned long long)SvUV(ST(i+1));
                     if ( opslimit < 1 ) {
-                        croak("Invalid opslimit: %lld", opslimit);
+                        croak("Invalid opslimit: %" UVuf, (UV) opslimit);
                     }
                 } else if ( keylen == 8 && strnEQ(key, "memlimit", 8) ) {
                     memlimit = (unsigned long long)SvUV(ST(i+1));
                     if ( memlimit < 1 ) {
-                        croak("Invalid memlimit: %lld", memlimit);
+                        croak("Invalid memlimit: %" UVuf, (UV) memlimit);
                     }
                 } else if ( keylen == 5 && strnEQ(key, "bytes", 5) ) {
                     outlen = (unsigned long long)SvUV(ST(i+1));
                     if ( outlen < 1 ) {
-                        croak("Invalid bytes: %lld", outlen);
+                        croak("Invalid bytes: %" UVuf, (UV) outlen);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -3841,12 +3917,12 @@ str(self, passphrase, ... )
                 if ( keylen == 8 && strnEQ(key, "opslimit", 8) ) {
                     opslimit =  SvUV(ST(i+1));
                     if ( opslimit < 1 ) {
-                        croak("Invalid opslimit: %lld", opslimit);
+                        croak("Invalid opslimit: %" UVuf, (UV) opslimit);
                     }
                 } else if ( keylen == 8 && strnEQ(key, "memlimit", 8) ) {
                     memlimit =  SvUV(ST(i+1));
                     if ( memlimit < 1 ) {
-                        croak("Invalid memlimit: %lld", memlimit);
+                        croak("Invalid memlimit: %" UVuf, (UV) memlimit);
                     }
                 } else {
                     croak("Invalid argument: %s", key);
@@ -4535,14 +4611,22 @@ SALSA20_KEYBYTES(...)
 unsigned int
 AES128CTR_NONCEBYTES(...)
     CODE:
+#ifdef AES128CTR_IS_AVAILABLE
         RETVAL = crypto_stream_aes128ctr_NONCEBYTES;
+#else
+        croak("AES128CTR is only available in libsodium v1.0.14 and below");
+#endif
     OUTPUT:
         RETVAL
 
 unsigned int
 AES128CTR_KEYBYTES(...)
     CODE:
+#ifdef AES128CTR_IS_AVAILABLE
         RETVAL = crypto_stream_aes128ctr_KEYBYTES;
+#else
+        croak("AES128CTR is only available in libsodium v1.0.14 and below");
+#endif
     OUTPUT:
         RETVAL
 
@@ -4570,7 +4654,11 @@ keygen(self)
                 key_size = crypto_stream_salsa20_KEYBYTES;
                 break;
             case 3:
+#ifdef AES128CTR_IS_AVAILABLE
                 key_size = crypto_stream_aes128ctr_KEYBYTES;
+#else
+                croak("AES128CTR is only available in libsodium v1.0.14 and below");
+#endif
                 break;
             default:
                 key_size = crypto_stream_KEYBYTES;
@@ -4605,7 +4693,11 @@ nonce(self, ...)
                 nonce_size = crypto_stream_salsa20_NONCEBYTES;
                 break;
             case 3:
+#ifdef AES128CTR_IS_AVAILABLE
                 nonce_size = crypto_stream_aes128ctr_NONCEBYTES;
+#else
+                croak("AES128CTR is only available in libsodium v1.0.14 and below");
+#endif
                 break;
             case 4:
                 nonce_size = crypto_stream_chacha20_IETF_NONCEBYTES;
@@ -4687,9 +4779,13 @@ bytes(self, length, nonce, key)
                 bytes_function = &crypto_stream_salsa20;
                 break;
             case 3:
+#ifdef AES128CTR_IS_AVAILABLE
                 nonce_size = crypto_stream_aes128ctr_NONCEBYTES;
                 key_size = crypto_stream_aes128ctr_KEYBYTES;
                 bytes_function = &crypto_stream_aes128ctr;
+#else
+                croak("AES128CTR is only available in libsodium v1.0.14 and below");
+#endif
                 break;
             case 4:
                 nonce_size = crypto_stream_salsa20_NONCEBYTES;
@@ -4777,9 +4873,13 @@ xor(self, msg, nonce, key)
                 xor_function = &crypto_stream_salsa20_xor;
                 break;
             case 3:
+#ifdef AES128CTR_IS_AVAILABLE
                 nonce_size = crypto_stream_aes128ctr_NONCEBYTES;
                 key_size = crypto_stream_aes128ctr_KEYBYTES;
                 xor_function = &crypto_stream_aes128ctr_xor;
+#else
+                croak("AES128CTR is only available in libsodium v1.0.14 and below");
+#endif
                 break;
             case 4:
                 nonce_size = crypto_stream_salsa20_NONCEBYTES;
@@ -5580,4 +5680,3 @@ DESTROY(self)
         sodium_free( bl->bytes );
         Safefree(bl);
     }
-

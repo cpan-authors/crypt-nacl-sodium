@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::hash
-# ABSTRACT: SHA-2 hash functions (SHA-256, SHA-512)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::hash - SHA-2 hash functions
 
 =head1 SYNOPSIS
 
@@ -213,5 +216,15 @@ L<Crypt::NaCl::Sodium::generichash> and L<Crypt::NaCl::Sodium::auth>.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

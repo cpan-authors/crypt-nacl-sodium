@@ -1,5 +1,8 @@
-# PODNAME: Crypt::NaCl::Sodium::scalarmult
-# ABSTRACT: Diffie-Hellman (Curve25519)
+=encoding utf8
+
+=head1 NAME
+
+Crypt::NaCl::Sodium::scalarmult - Diffie-Hellman
 
 =head1 SYNOPSIS
 
@@ -139,5 +142,15 @@ C<crypto_scalarmult> uses I<Curve25519>.
 
 =back
 
-=cut
+=head1 AUTHOR
 
+Alex J. G. Burzyński <F<ajgb@cpan.org>>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2015 Alex J. G. Burzyński. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

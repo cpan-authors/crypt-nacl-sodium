@@ -1,89 +1,130 @@
 
 use strict;
 use warnings;
+
+use Cwd            ();
+use File::Basename ();
+use File::Spec     ();
+use Crypt::NaCl::Sodium qw(:utils);
 use Test::More;
 
+sub add_l {
+    my $S = shift;
+    my $l = "\x{ed}\x{d3}\x{f5}\x{5c}\x{1a}\x{63}\x{12}\x{58}\x{d6}\x{9c}\x{f7}\x{a2}\x{de}\x{f9}\x{de}\x{14}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{10}";
 
-use Crypt::NaCl::Sodium qw(:utils);
+    # equivalent of sodium_add($S, $l, length($l))
+    return Crypt::NaCl::Sodium::add($S, $l);
+}
 
+sub getTestData {
+    my $dir  = File::Basename::dirname(Cwd::abs_path __FILE__);
+    my $file = File::Spec->catfile($dir, 'sodium_sign.dat');
+    open(my $fh, '<', $file) or die "Cannot open test data file: $!";
+    my @tests;
+    while (my $line = <$fh>) {
+        my ($sk, $pk, $sig, $msg)
+            = $line =~ /\[\[([^\]]+)\]\[([^\]]+)\]\[([^\]]+)\]"([^"]*)"\]/;
+
+        push @tests, {sk => hex2bin($sk), pk => hex2bin($pk), sig => hex2bin($sig), msg => hex2bin($msg),};
+    }
+
+    return @tests;
+}
 
 my $crypto_sign = Crypt::NaCl::Sodium->sign();
+my $keypair_seed = "\x{42}\x{11}\x{51}\x{a4}\x{59}\x{fa}\x{ea}\x{de}\x{3d}\x{24}\x{71}\x{15}\x{f9}\x{4a}\x{ed}\x{ae}\x{42}\x{31}\x{81}\x{24}\x{09}\x{5a}\x{fa}\x{be}\x{4d}\x{14}\x{51}\x{a5}\x{59}\x{fa}\x{ed}\x{ee}";
 
-my $keypair_seed = join('', map { chr($_) }
-        0x42, 0x11, 0x51, 0xa4, 0x59, 0xfa, 0xea, 0xde, 0x3d, 0x24, 0x71,
-        0x15, 0xf9, 0x4a, 0xed, 0xae, 0x42, 0x31, 0x81, 0x24, 0x09, 0x5a,
-        0xfa, 0xbe, 0x4d, 0x14, 0x51, 0xa5, 0x59, 0xfa, 0xed, 0xee
-);
-
-my @l = (
-        0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
-        0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10
-);
-
-ok($crypto_sign->$_ > 0, "$_ > 0") for qw( BYTES PUBLICKEYBYTES SECRETKEYBYTES SEEDBYTES );
+diag(Crypt::NaCl::Sodium::sodium_version_string());
+ok($crypto_sign->$_ > 0, "$_ > 0")
+    for qw( BYTES PUBLICKEYBYTES SECRETKEYBYTES SEEDBYTES );
 
 my @tests = getTestData();
+
+my ($mac, $pk, $msg);    # last test used later
 my $i = 0;
-my ($mac, $pk_bin, $msg_bin); # last test used later
-for ($i = 0; $i < scalar @tests; $i++) {
-    my $test = $tests[$i];
-    my $t = $i + 1;
+foreach my $test (@tests) {
+    $i++;
 
-    my $sk_bin = hex2bin($test->{sk});
-    $pk_bin = hex2bin($test->{pk});
-    my $sig_bin = hex2bin($test->{sig});
-    my $skpk = substr($sk_bin, 0, $crypto_sign->SEEDBYTES) . substr($pk_bin, 0, $crypto_sign->PUBLICKEYBYTES);
-    my $msg = $test->{msg};
-    $msg_bin = hex2bin($msg);
+    $pk = $test->{pk};
+    $msg = $test->{msg};
+    my $skpk    = substr($test->{sk}, 0, $crypto_sign->SEEDBYTES)
+        . substr($test->{pk}, 0, $crypto_sign->PUBLICKEYBYTES);
 
-    my $sealed = $crypto_sign->seal( $msg_bin, $skpk );
-    ok($sealed, "message $t sealed");
+    my $sealed = $crypto_sign->seal($msg, $skpk);
+    ok($sealed, "message $i sealed");
     my $s_sealed = "$sealed";
 
-    is(bin2hex(substr($s_sealed, 0, $crypto_sign->BYTES)), $test->{sig}, "signature $t correct");
+    is(substr($s_sealed, 0, $crypto_sign->BYTES),
+        $test->{sig}, "signature $i correct");
 
-    my $opened = $crypto_sign->open( $sealed, $pk_bin );
-    is(bin2hex($opened), $test->{msg}, "message $t opened");
+    my $opened = $crypto_sign->open($sealed, $test->{pk});
+    is($opened, $test->{msg}, "message $i opened");
 
     my $mod_sealed = substr($s_sealed, 0, 32) . add_l(substr($s_sealed, 32));
-    isnt(bin2hex($sealed), bin2hex($mod_sealed), "modified sealed message");
+    isnt($sealed, $mod_sealed, "modified $i sealed message");
 
-    my $mod_opened = $crypto_sign->open( $mod_sealed, $pk_bin );
-    is(bin2hex($mod_opened), $test->{msg}, "message $t is malleable");
+    my $error;
+    my $mod_opened;
+    {
+        # In libsodium versions <= 1.08.0 this test would return no error
+        # as malleable signatures were allowed.  You need to build
+        # libsodium with #define ED25519_COMPAT to retain the malleable
+        # signatures
+        local $@;
+        #<<<  do not let perltidy touch this
+        $error = $@ || 'Error' unless eval {
+            $mod_opened = $crypto_sign->open($mod_sealed, $test->{pk});
+            1;
+        };
+        #>>>
+    }
+    if ($mod_opened && bin2hex($mod_opened) eq $test->{msg}) {
+        ok(1, "message $i is malleable");
+    }
+    else {
+        ok(1, "Message $i is not malleable");
+        next;
+    }
 
-    my $c = ord(substr($mod_sealed, $i + $crypto_sign->BYTES - 1, 1));
+    my $c = ord(substr($mod_sealed, ($i-1) + $crypto_sign->BYTES - 1, 1));
     $c = ($c + 1) & 0xFF;
-    substr($mod_sealed, $i + $crypto_sign->BYTES - 1, 1, chr($c));
+    substr($mod_sealed, ($i-1) + $crypto_sign->BYTES - 1, 1, chr($c));
 
-    eval {
-        my $mod_opened = $crypto_sign->open( $mod_sealed, $pk_bin );
-    };
-    like($@, qr/Message forged/, "message $t was forged");
+    eval { my $mod_opened = $crypto_sign->open($mod_sealed, $test->{pk}); };
+    like($@, qr/Message forged/, "message $i was forged");
 
-    $mac = $crypto_sign->mac( $msg_bin, $skpk );
-    ok($mac, "detached signature $t");
-    ok(length($mac) != 0 && length($mac) <= $crypto_sign->BYTES, "...and $t of correct length");
-    is(bin2hex($mac), $test->{sig}, "correct signature $t");
+    $mac = $crypto_sign->mac($msg, $skpk);
+    ok($mac, "detached signature $i");
+    ok(length($mac) != 0 && length($mac) <= $crypto_sign->BYTES,
+        "...and $i of correct length");
+    is($mac, $test->{sig}, "correct signature $i");
 
-    ok($crypto_sign->verify( $mac , $msg_bin, $pk_bin ), "...and verified $t" );
+    ok($crypto_sign->verify($mac, $msg, $pk), "...and verified $i");
 }
 
-my $s_mac = "$mac"; # from byteslocker
-for (my $j = 1; $j < 8; $j++) {
-    my $c = ord(substr($s_mac, 63, 1));
-    $c ^= ( $j << 5);
-    substr($s_mac, 63, 1, chr($c & 0xFF));
+if ($mac) {
+    my $s_mac = "$mac";    # from byteslocker
+    foreach my $j (1 .. 7) {
+        my $c = ord(substr($s_mac, 63, 1));
+        $c ^= ($j << 5);
+        substr($s_mac, 63, 1, chr($c & 0xFF));
 
-    ok( ! $crypto_sign->verify( $s_mac , $msg_bin, $pk_bin ), "detached signature verification $j failed");
+        ok(
+            !$crypto_sign->verify($s_mac, $msg, $pk),
+            "detached signature verification $j failed"
+        );
 
-    $c ^= ( $j << 5);
-    substr($s_mac, 63, 1, chr($c & 0xFF));
+        $c ^= ($j << 5);
+        substr($s_mac, 63, 1, chr($c & 0xFF));
+    }
+
+    ok(
+        !$crypto_sign->verify(
+            $s_mac, $msg, "\0" x $crypto_sign->PUBLICKEYBYTES
+        ),
+        "detached signature verification have failed"
+    );
 }
-
-ok( ! $crypto_sign->verify( $s_mac , $msg_bin, "\0" x $crypto_sign->PUBLICKEYBYTES),
-    "detached signature verification have failed");
 
 my ($pkey, $skey) = $crypto_sign->keypair();
 ok($pkey, "pkey generated");
@@ -102,44 +143,11 @@ ok($extract_pkey, "extracted pkey from generated secret key");
 is(bin2hex($extract_pkey), bin2hex($pkey), "...and is correct");
 
 is(bin2hex($pkey),
-    "b5076a8474a832daee4dd5b4040983b6623b5f344aca57d4d6ee4baf3f259e6e", "correct pkey");
-is(bin2hex($skey),
-    "421151a459faeade3d247115f94aedae42318124095afabe4d1451a559faedeeb5076a8474a832daee4dd5b4040983b6623b5f344aca57d4d6ee4baf3f259e6e", "correct skey");
-
+    "b5076a8474a832daee4dd5b4040983b6623b5f344aca57d4d6ee4baf3f259e6e",
+    "correct pkey");
+is(
+    bin2hex($skey),
+    "421151a459faeade3d247115f94aedae42318124095afabe4d1451a559faedeeb5076a8474a832daee4dd5b4040983b6623b5f344aca57d4d6ee4baf3f259e6e",
+    "correct skey"
+);
 done_testing();
-
-
-sub add_l {
-    my $S = shift;
-
-    my $c = 0;
-    my $i;
-    my $s;
-
-    for ($i = 0; $i < 32; $i++) {
-        $s = ord(substr($S, $i, 1)) + $l[$i] + $c;
-        substr($S, $i, 1, chr($s & 0xFF));
-        $c = (($s >> 8) & 1) & 0xFF;
-    }
-
-    return $S;
-}
-
-sub getTestData {
-    open(TEST, "t/sodium_sign.dat") or die "Cannot open test data file: $!";
-    my @tests;
-    while (my $line = <TEST>) {
-        my ($sk, $pk, $sig, $msg)
-        = $line =~ /\[\[([^\]]+)\]\[([^\]]+)\]\[([^\]]+)\]"([^"]*)"\]/;
-
-        push @tests, {
-            sk => $sk,
-            pk => $pk,
-            sig => $sig,
-            msg => $msg,
-        };
-    }
-
-    return @tests;
-}
-
