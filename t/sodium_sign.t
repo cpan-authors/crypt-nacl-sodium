@@ -66,6 +66,10 @@ foreach my $test (@tests) {
     my $error;
     my $mod_opened;
     {
+        # In libsodium versions <= 1.08.0 this test would return no error
+        # as malleable signatures were allowed.  You need to build
+        # libsodium with #define ED25519_COMPAT to retain the malleable
+        # signatures
         local $@;
         #<<<  do not let perltidy touch this
         $error = $@ || 'Error' unless eval {

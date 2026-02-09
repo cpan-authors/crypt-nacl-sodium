@@ -482,6 +482,32 @@ The length of the C<$bytes> equals the value of C<$num_of_bytes>.
 
 Returns L<Data::BytesLocker> object.
 
+=head2 add
+
+    # equivalent of sodium_add($S, $l, length($l))
+    my $x = Crypt::NaCl::Sodium::add($S, $l);
+
+Accepts two integers.  It computes (a + b) mod 2^(8*len) in constant time
+for a given length and returns the result.
+
+Returns Integer
+
+=head2 has_aes128ctr
+
+    my $supported = Crypt::NaCl::Sodium::has_aes128ctr()
+
+Checks whether the underlying libsodium supports ASE128CTR
+
+Returns &PL_sv_yes or &PL_sx_no
+
+=head2 sodium_version_string
+
+    my $version = Crypt::NaCl::Sodium::sodium_version_string()
+
+Gets the libsodium version string
+
+Returns a string like "1.0.18"
+
 =head1 VARIABLES
 
 =head2 $Data::BytesLocker::DEFAULT_LOCKED

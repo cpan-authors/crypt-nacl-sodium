@@ -127,7 +127,7 @@ Returns L<Data::BytesLocker> object.
         opslimit => $opslimit, memlimit => $memlimit
     );
 
-Returns ASCI encoded string, which includes:
+Returns ASCII encoded string, which includes:
 
 =over 4
 

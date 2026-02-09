@@ -30,7 +30,7 @@ xsalsa20
     # decrypt
     my $decrypted_msg = $crypto_stream->xor($secret, $nonce, $key);
 
-chaha20
+chacha20
 
     use strict;
     use warnings;

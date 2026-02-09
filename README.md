@@ -361,6 +361,38 @@ The length of the `$bytes` equals the value of `$num_of_bytes`.
 
 Returns [Data::BytesLocker](https://metacpan.org/pod/Data%3A%3ABytesLocker) object.
 
+## add
+
+```perl
+# equivalent of sodium_add($S, $l, length($l))
+my $x = Crypt::NaCl::Sodium::add($S, $l);
+```
+
+Accepts two integers.  It computes (a + b) mod 2^(8\*len) in constant time
+for a given length and returns the result.
+
+Returns Integer
+
+## has\_aes128ctr
+
+```perl
+my $supported = Crypt::NaCl::Sodium::has_aes128ctr()
+```
+
+Checks whether the underlying libsodium supports ASE128CTR
+
+Returns &PL\_sv\_yes or &PL\_sx\_no
+
+## sodium\_version\_string
+
+```perl
+my $version = Crypt::NaCl::Sodium::sodium_version_string()
+```
+
+Gets the libsodium version string
+
+Returns a string like "1.0.18"
+
 # VARIABLES
 
 ## $Data::BytesLocker::DEFAULT\_LOCKED
