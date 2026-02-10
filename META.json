@@ -88,18 +88,19 @@
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/genio/crypt-nacl-sodium/issues"
+         "web" : "https://github.com/cpan-authors/crypt-nacl-sodium/issues"
       },
-      "homepage" : "https://github.com/genio/crypt-nacl-sodium",
+      "homepage" : "https://github.com/cpan-authors/crypt-nacl-sodium",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/genio/crypt-nacl-sodium.git",
-         "web" : "https://github.com/genio/crypt-nacl-sodium"
+         "url" : "https://github.com/cpan-authors/crypt-nacl-sodium.git",
+         "web" : "https://github.com/cpan-authors/crypt-nacl-sodium"
       }
    },
    "version" : "2.000",
    "x_contributors" : [
       "Chase Whitener <capoeirab@cpan.org>"
+      "Timothy Legge <timlegge@gmail.com>"
    ],
    "x_generated_by_perl" : "v5.26.1",
    "x_serialization_backend" : "Cpanel::JSON::XS version 4.19",
