@@ -56,6 +56,7 @@ my %WriteMakefileArgs = (
     "Alien::Base::Wrapper" => "2.15",
     "Alien::Sodium" => "2.000",
     "Config" => 0,
+    "Devel::CheckLib" => 0,
     "ExtUtils::MakeMaker" => "6.52"
   },
   "DISTNAME" => "Crypt-NaCl-Sodium",

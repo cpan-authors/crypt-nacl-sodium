@@ -11,6 +11,7 @@ on 'configure' => sub {
     requires 'Alien::Sodium' => '2.000';
     requires 'Alien::Base::Wrapper' => '2.15';
     requires 'Config';
+    requires 'Devel::CheckLib';
     requires 'ExtUtils::MakeMaker' => '6.52';
 };
 
