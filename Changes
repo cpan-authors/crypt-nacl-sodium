@@ -2,6 +2,16 @@ Revision history for Perl extension Crypt::NaCl::Sodium.
 
 {{$NEXT}}
 
+2.001     2026-02-12
+
+    - Production release of 2.000
+    - Added Devel::CheckLib dependancy to Configure Requires
+
+    [Compatibility Changes from 1.0.8.0]
+    - AES128CTR was dropped in libsodium (1.0.15)
+    - Minimum key Byte Size of 16 is now enforced in libsodium (1.0.11)
+    - Malleable signatures unsupported unless ED25519_COMPAT defined in libsodium (1.0.9)
+
 2.000     2026-02-10
 
     - Support Alien::Sodium v2.000 (libsodium 1.0.18)
