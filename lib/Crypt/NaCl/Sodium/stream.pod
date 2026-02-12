@@ -437,6 +437,10 @@ Salsa20 reduced to 8 rounds:
 
 See L</salsa20_bytes> for details.
 
+B<Note> Deprecated. Define I<INCLUDE_DEPRECATED> to include
+
+    perl Makefile.PL -Dyes # to define INCLUDE_DEPRECATED
+
 =head3 salsa20_xor
 
     # encryption
@@ -475,6 +479,10 @@ Salsa20 reduced to 8 rounds:
     my $decrypted_msg = $crypto_stream->salsa208_xor($secret, $nonce, $key);
 
 See L</salsa20_xor> for details.
+
+B<Note> Deprecated. Define I<INCLUDE_DEPRECATED> to include
+
+    perl Makefile.PL -Dyes # to define INCLUDE_DEPRECATED
 
 =head3 salsa20_xor_ic
 
@@ -553,6 +561,13 @@ indistinguishable from uniform random strings of the same length.
 C<crypto_stream> does not make any promises regarding the resistance to
 "related-key attacks". It is the caller's responsibility to use proper
 key-derivation functions.
+
+=head1 DEPRECATED FUNCTIONS
+
+The B<salsa208> bytes and xor functions have been deprecated and are not included
+by default.  To include the deprecated functions use:
+
+    perl Makefile.PL -Dyes
 
 =head1 AUTHOR
 
