@@ -4793,9 +4793,13 @@ bytes(self, length, nonce, key)
                 bytes_function = &crypto_stream_salsa2012;
                 break;
             case 5:
+#ifdef INCLUDE_DEPRECATED
                 nonce_size = crypto_stream_salsa20_NONCEBYTES;
                 key_size = crypto_stream_salsa20_KEYBYTES;
                 bytes_function = &crypto_stream_salsa208;
+#else
+                croak("crypto_stream_salsa208 was deprecated in v1.0.18 define INCLUDE_DEPRECATED to use");
+#endif
                 break;
             case 6:
                 nonce_size = crypto_stream_chacha20_IETF_NONCEBYTES;
@@ -4887,9 +4891,13 @@ xor(self, msg, nonce, key)
                 xor_function = &crypto_stream_salsa2012_xor;
                 break;
             case 5:
+#ifdef INCLUDE_DEPRECATED
                 nonce_size = crypto_stream_salsa20_NONCEBYTES;
                 key_size = crypto_stream_salsa20_KEYBYTES;
                 xor_function = &crypto_stream_salsa208_xor;
+#else
+                croak("crypto_stream_salsa208_xor was deprecated in v1.0.18 define INCLUDE_DEPRECATED to use");
+#endif
                 break;
             case 6:
                 nonce_size = crypto_stream_chacha20_IETF_NONCEBYTES;
