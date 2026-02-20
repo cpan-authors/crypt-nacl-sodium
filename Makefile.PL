@@ -6,28 +6,47 @@ use warnings;
 
 use ExtUtils::MakeMaker;
 
+use File::Spec::Functions qw(catdir); 
+
 use Alien::Sodium ();
 use Alien::Base::Wrapper ();
 use Devel::CheckLib qw(check_lib);
 
+my $alien_include = '-I' . catdir(Alien::Sodium->dist_dir(), 'include');
+my $alien_libs    = Alien::Sodium->libs();
+my $alien_cflags = Alien::Sodium->cflags();
+
+sub clean_ccflags {
+    use Config;
+    my $ccflags = $Config{ccflags};
+    $ccflags =~ s:-I\S*::g;
+    return $ccflags;
+}
+
 sub has_aes256gcm {
-    return check_lib(
+    use Mock::Config ccflags => clean_ccflags();
+    my $ret = check_lib(
         debug => 0,
         function => 'return !(!sodium_init() && crypto_aead_aes256gcm_is_available());',
-        LIBS => Alien::Sodium->libs,
-        ccflags => Alien::Sodium->cflags(),
+        LIBS => $alien_libs,
+        ccflags => $alien_cflags,
         header => 'sodium.h',
     );
+    Mock::Config->unimport;      # Undo overrides
+    return $ret;
 }
 
 sub has_aes128ctr {
-    return check_lib(
+    use Mock::Config ccflags => clean_ccflags();
+    my $ret = check_lib(
         debug => 0,
         function => 'sodium_init(); return crypto_stream_aes128ctr_NONCEBYTES ? 0 : 1;',
-        LIBS => Alien::Sodium->libs,
-        ccflags => Alien::Sodium->cflags(),
+        LIBS => $alien_libs,
+        ccflags => $alien_cflags,
         header => 'sodium.h',
     );
+    Mock::Config->unimport;      # Undo overrides
+    return $ret;
 }
 
 my @defines;
@@ -36,6 +55,7 @@ push @defines, 'AES128CTR_IS_AVAILABLE' if has_aes128ctr();
 my %xsbuild = Alien::Base::Wrapper->new('Alien::Sodium')->mm_args2(
     "DEFINE" => join(" ", map { "-D$_" } @defines),
 );
+
 # use Data::Dumper;
 # print Dumper(\%xsbuild);
 # exit(1);
