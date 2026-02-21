@@ -9,6 +9,13 @@ use ExtUtils::MakeMaker;
 use Alien::Sodium ();
 use Alien::Base::Wrapper ();
 use Devel::CheckLib qw(check_lib);
+use Getopt::Std;
+
+my %opts;
+
+getopt('D:', \%opts) or die usage();
+
+my $include_deprecated = ( defined $opts{D} && $opts{D} eq 'yes' ) ? 1 : 0;
 
 sub has_aes256gcm {
     return check_lib(
@@ -33,6 +40,7 @@ sub has_aes128ctr {
 my @defines;
 push @defines, 'AES256GCM_IS_AVAILABLE' if has_aes256gcm();
 push @defines, 'AES128CTR_IS_AVAILABLE' if has_aes128ctr();
+push @defines, 'INCLUDE_DEPRECATED' if $include_deprecated;
 my %xsbuild = Alien::Base::Wrapper->new('Alien::Sodium')->mm_args2(
     "DEFINE" => join(" ", map { "-D$_" } @defines),
 );
