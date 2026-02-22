@@ -2,6 +2,18 @@ Revision history for Perl extension Crypt::NaCl::Sodium.
 
 {{$NEXT}}
 
+2.002     2026-02-22
+
+    - Fix Integer Overflow flaw on 32-bit systems (CVE-2026-2588)
+    - Don't include deprecated crypto_stream_salsa20 functions
+      see the docs to do a custom build
+    - Add github actions and fix git checkout on Windows
+    - Add a security policy
+
+    [Compatibility Changes from 2.001]
+    - Deprecated crypto_stream_salsa20 functions are not built
+      by default
+
 2.001     2026-02-12
 
     - Production release of 2.000

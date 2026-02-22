@@ -4,7 +4,7 @@
       "Alex J. G. Burzy\u0144ski <ajgb@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 6.037, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Dist::Zilla version 6.033, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
@@ -90,7 +90,7 @@
    "provides" : {
       "Crypt::NaCl::Sodium" : {
          "file" : "lib/Crypt/NaCl/Sodium.pm",
-         "version" : "2.001"
+         "version" : "2.002"
       }
    },
    "release_status" : "stable",
@@ -105,7 +105,7 @@
          "web" : "https://github.com/cpan-authors/crypt-nacl-sodium"
       }
    },
-   "version" : "2.001",
+   "version" : "2.002",
    "x_contributors" : [
       "Chase Whitener <capoeirab@cpan.org>",
       "Timothy Legge <timlegge@gmail.com>"
