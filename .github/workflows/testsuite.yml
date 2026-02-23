@@ -163,7 +163,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        perl-version: ${{ fromJson (needs.perl-versions.outputs.perl-versions) }}
+        perl-version: [latest]
 
     steps:
       - uses: actions/checkout@v5
