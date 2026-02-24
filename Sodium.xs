@@ -2113,6 +2113,9 @@ encrypt(self, msg, adata, nonce, key)
 
         adata_buf = (unsigned char *)SvPV(adata, adata_len);
 
+        if (msg_len > SIZE_MAX - adlen_size) {
+            croak("Encrypted length exceeds system memory limit (size_t overflow)");
+        }
         enc_len = msg_len + adlen_size;
         bl = InitDataBytesLocker(aTHX_ enc_len);
 
