@@ -3301,6 +3301,9 @@ seal(self, msg, seckey)
 
         msg_buf = (unsigned char *)SvPV(msg, msg_len);
 
+        if (msg_len > SIZE_MAX - crypto_sign_BYTES) {
+            croak("Encrypted length exceeds system memory limit (size_t overflow)");
+        }
         enc_len = crypto_sign_BYTES + msg_len;
         bl = InitDataBytesLocker(aTHX_ enc_len);
         unsigned long long sodium_enc_len;
