@@ -939,6 +939,9 @@ bin2hex(bin_sv)
     CODE:
         bin = (unsigned char *)SvPV(bin_sv, bin_len);
 
+        if ( bin_len > SIZE_MAX / 2 ) { /* avoid overflow */
+            croak("Could not allocate memory");
+        }
         hex_len = bin_len * 2;
         hex = sodium_malloc(hex_len + 1);
         if ( hex == NULL ) {
