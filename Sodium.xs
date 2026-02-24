@@ -2310,6 +2310,9 @@ aes256gcm_encrypt_afternm(self, msg, adata, nonce, precalculated_key)
 
         adata_buf = (unsigned char *)SvPV(adata, adata_len);
 
+        if (msg_len > SIZE_MAX - crypto_aead_aes256gcm_ABYTES) {
+            croak("Encrypted length exceeds system memory limit (size_t overflow)");
+        }
         enc_len = msg_len + crypto_aead_aes256gcm_ABYTES;
         bl = InitDataBytesLocker(aTHX_ enc_len);
 
