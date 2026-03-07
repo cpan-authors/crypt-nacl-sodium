@@ -940,7 +940,7 @@ bin2hex(bin_sv)
         bin = (unsigned char *)SvPV(bin_sv, bin_len);
 
         if ( bin_len > SIZE_MAX / 2 ) { /* avoid overflow */
-            croak("Could not allocate memory");
+            croak("Binary data provided too large (will cause hex_len > SIZE_MAX)");
         }
         hex_len = bin_len * 2;
         hex = sodium_malloc(hex_len + 1);
