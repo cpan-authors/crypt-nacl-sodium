@@ -296,6 +296,11 @@ STATIC MGVTBL vtbl_onetimeauth = {
 
 static DataBytesLocker * InitDataBytesLocker(pTHX_ STRLEN size) {
     DataBytesLocker *bl;
+
+    if (size == SIZE_MAX) {
+        croak("Size requested in InitDataBytesLocker is too large");
+    }
+
     Newx(bl, 1, DataBytesLocker);
 
     if ( bl == NULL ) {
@@ -5130,6 +5135,10 @@ _overload_mult(self, other, swapped)
 
         count = SvUV(other);
 
+        if (sbl->length && count > SIZE_MAX / sbl->length) {
+            croak("Repetition length exceeds system memory limit (size_t overflow)");
+        }
+
         bl = InitDataBytesLocker(aTHX_ sbl->length * count);
 
         while(count--) {
@@ -5161,6 +5170,10 @@ _overload_concat(self, other, swapped)
         }
 
         buf = (unsigned char *)SvPV(other, buf_len);
+
+        if (buf_len > SIZE_MAX - sbl->length) {
+            croak("Concatenated length exceeds system memory limit (size_t overflow)");
+        }
 
         bl = InitDataBytesLocker(aTHX_ sbl->length + buf_len);
 
