@@ -296,6 +296,11 @@ STATIC MGVTBL vtbl_onetimeauth = {
 
 static DataBytesLocker * InitDataBytesLocker(pTHX_ STRLEN size) {
     DataBytesLocker *bl;
+
+    if (size == SIZE_MAX) {
+        croak("Size requested in InitDataBytesLocker is too large");
+    }
+
     Newx(bl, 1, DataBytesLocker);
 
     if ( bl == NULL ) {
@@ -741,7 +746,6 @@ add(left, right)
     INIT:
         unsigned char * left_buf;
         unsigned char * right_buf;
-        STRLEN copy_len;
         STRLEN left_len;
         STRLEN right_len;
     CODE:
@@ -751,12 +755,12 @@ add(left, right)
         if (right_len > left_len) {
             croak("You must have a RHS less than or equal in length to the LHS");
         }
-        copy = sodium_malloc(left_len + 1);
+        copy = sodium_malloc(left_len);
         if (copy == NULL) {
             croak("Could not allocate memory");
         }
 
-        strcpy(copy, left_buf);
+        memcpy(copy, left_buf, left_len);
 
         sodium_add(copy, right_buf, right_len);
         RETVAL = newSVpvn((const char * const)copy, left_len);
@@ -5119,8 +5123,8 @@ _overload_mult(self, other, swapped)
         DataBytesLocker* sbl = GetBytesLocker(aTHX_ self);
     INIT:
         DataBytesLocker *bl;
-        unsigned int count = 0;
-        unsigned int cur = 0;
+        UV count = 0;
+        UV cur = 0;
     OVERLOAD: x
     CODE:
     {
@@ -5129,6 +5133,10 @@ _overload_mult(self, other, swapped)
         }
 
         count = SvUV(other);
+
+        if (sbl->length && count > SIZE_MAX / sbl->length) {
+            croak("Repetition length exceeds system memory limit (size_t overflow)");
+        }
 
         bl = InitDataBytesLocker(aTHX_ sbl->length * count);
 
@@ -5161,6 +5169,10 @@ _overload_concat(self, other, swapped)
         }
 
         buf = (unsigned char *)SvPV(other, buf_len);
+
+        if (buf_len > SIZE_MAX - sbl->length) {
+            croak("Concatenated length exceeds system memory limit (size_t overflow)");
+        }
 
         bl = InitDataBytesLocker(aTHX_ sbl->length + buf_len);
 
