@@ -5123,8 +5123,8 @@ _overload_mult(self, other, swapped)
         DataBytesLocker* sbl = GetBytesLocker(aTHX_ self);
     INIT:
         DataBytesLocker *bl;
-        unsigned int count = 0;
-        unsigned int cur = 0;
+        UV count = 0;
+        UV cur = 0;
     OVERLOAD: x
     CODE:
     {
