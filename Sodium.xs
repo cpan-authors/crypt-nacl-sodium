@@ -746,7 +746,6 @@ add(left, right)
     INIT:
         unsigned char * left_buf;
         unsigned char * right_buf;
-        STRLEN copy_len;
         STRLEN left_len;
         STRLEN right_len;
     CODE:
@@ -756,12 +755,12 @@ add(left, right)
         if (right_len > left_len) {
             croak("You must have a RHS less than or equal in length to the LHS");
         }
-        copy = sodium_malloc(left_len + 1);
+        copy = sodium_malloc(left_len);
         if (copy == NULL) {
             croak("Could not allocate memory");
         }
 
-        strcpy(copy, left_buf);
+        memcpy(copy, left_buf, left_len);
 
         sodium_add(copy, right_buf, right_len);
         RETVAL = newSVpvn((const char * const)copy, left_len);

@@ -137,4 +137,30 @@ increment($nonce);
 is(bin2hex($nonce), "0001ff000000000000000000000000000000000000000000",
     "incremented ff00ff000...");
 
+# Crypt::NaCl::Sodium::add() must copy the full buffer, not stop at the first
+# NUL. Before the strcpy() -> memcpy() fix this returned uninitialised heap
+# (libsodium's 0xdb fill) for every byte past an embedded NUL.
+{
+    my $left  = "\x01\x00\x00\x00\xff";
+    my $right = "\x01\x00\x00\x00\x00";
+    is(bin2hex(Crypt::NaCl::Sodium::add($left, $right)), "02000000ff",
+        "add() copies past an embedded NUL");
+
+    is(bin2hex(Crypt::NaCl::Sodium::add("\x00" x 4, "\x00" x 4)), "00000000",
+        "add() of all-NUL operands");
+
+    # RHS shorter than LHS: only the low bytes are added
+    is(bin2hex(Crypt::NaCl::Sodium::add("\x00\x00\xaa", "\x02")), "0200aa",
+        "add() with a shorter RHS leaves the high bytes intact");
+
+    is(bin2hex(Crypt::NaCl::Sodium::add("\xff" x 4, "\x01" . "\x00" x 3)),
+        "00000000", "add() wraps mod 2^(8*len)");
+
+    is(Crypt::NaCl::Sodium::add("", ""), "", "add() of empty operands");
+
+    eval { Crypt::NaCl::Sodium::add("\x01", "\x01\x02") };
+    like($@, qr/^You must have a RHS less than or equal in length to the LHS/,
+        "add() rejects a RHS longer than the LHS");
+}
+
 done_testing();
