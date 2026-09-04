@@ -2,6 +2,15 @@ Revision history for Perl extension Crypt::NaCl::Sodium.
 
 {{$NEXT}}
 
+2.004     2026-09-03
+
+    Minor hardening fixes thanks Brad Barden
+    - Sign release with cosign (Sigstore)
+    - SvUV returns UV not unsigned int
+    - replace strcpy with memcpy to ensure embeded nulls are copied properly
+    - add a test to avoid regression
+    - Prevent SIZE_MAX memory overflow
+
 2.003     2026-03-07
 
     - Fix Integer Overflow flaws (CVE-2026-30909) (Brad Barden)
