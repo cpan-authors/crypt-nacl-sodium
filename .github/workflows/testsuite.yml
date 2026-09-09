@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v6
       - run: perl -V
       - name: uses install-with-cpm
-        uses: perl-actions/install-with-cpm@v1
+        uses: perl-actions/install-with-cpm@v2
         with:
           install: "Devel::CheckLib"
           cpanfile: "cpanfile"
@@ -72,7 +72,7 @@ jobs:
           yum install --skip-broken -y perl make gcc libsodium-devel sudo curl
       - run: perl -V
       - name: uses install-with-cpm
-        uses: perl-actions/install-with-cpm@v1
+        uses: perl-actions/install-with-cpm@v2
         with:
           install: "Devel::CheckLib"
           cpanfile: "cpanfile"
